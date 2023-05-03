@@ -17,7 +17,7 @@ If you do run this, be aware that:
 Things I would like to implement:
 
 - "advanced mode" (email body is handed directly off to msync)
-- multi-user configuration (check multiple inboxes, post to corresponding accounts)
+- multi-user support (check multiple inboxes, post to corresponding accounts)
 - reply with notifications? this one's dangerous
 - security (verify sent-from email, maybe GPG signatures?)
 
