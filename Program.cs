@@ -2,6 +2,7 @@
 using CliWrap.Buffered;
 using MailKit;
 using MailKit.Net.Imap;
+using MailKit.Net.Smtp;
 using MimeKit;
 using System.Configuration;
 using System.Text;
@@ -12,6 +13,9 @@ namespace FediMail
     {
         private static readonly TimeSpan sleepTime = TimeSpan.FromSeconds(30);
         private static readonly string msyncPath = ConfigurationManager.AppSettings["msyncPath"];
+
+        private static readonly Queue<MimeMessage> replies = new Queue<MimeMessage>();
+        private static readonly Queue<string> tempFiles = new Queue<string>();
         static async Task Main(string[] args)
         {
             bool stayAlive = args.Contains("--daemon");
@@ -28,7 +32,17 @@ namespace FediMail
 
             do
             {
-                await DoEmailCheck(mailConfig);
+                try
+                {
+                    await DoEmailCheck(mailConfig);
+                    await SendReplies(mailConfig);
+                    CleanupTempFiles();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+
                 if (stayAlive)
                 {
                     Console.WriteLine($"Sleeping for {sleepTime} before checking again.");
@@ -36,6 +50,15 @@ namespace FediMail
                 }
             } while (stayAlive);
 
+        }
+
+        private static void CleanupTempFiles()
+        {
+            while (tempFiles.TryDequeue(out var path))
+            {
+                Console.WriteLine("Deleting temporary file " + path);
+                File.Delete(path);
+            }
         }
 
         private static async Task DoEmailCheck(MailConfig mailConfig)
@@ -60,6 +83,7 @@ namespace FediMail
                     {
                         var message = inbox.GetMessage(i);
                         var tempPath = WritePostFile(message);
+                        tempFiles.Enqueue(tempPath);
 
                         Console.WriteLine("Wrote post file to " + tempPath);
 
@@ -71,9 +95,9 @@ namespace FediMail
 
                         Console.WriteLine(result.StandardOutput);
 
-                        File.Delete(tempPath);
-
                         await inbox.StoreAsync(i, new StoreFlagsRequest(StoreAction.Add, MessageFlags.Deleted) { Silent = true });
+
+                        replies.Enqueue(MakeReply(mailConfig, message, result, tempPath));
                     }
 
                     var syncResult = await Cli.Wrap(msyncPath)
@@ -84,7 +108,63 @@ namespace FediMail
                 }
                 finally
                 {
-                    inbox.Expunge();
+                    try
+                    {
+                        inbox.Expunge();
+                    }
+                    finally
+                    {
+                        client.Disconnect(true);
+                    }
+                }
+            }
+        }
+
+        private static MimeMessage MakeReply(MailConfig mailConfig, MimeMessage message, BufferedCommandResult result, string tempFile)
+        {
+            var replyMessage = new MimeMessage();
+            replyMessage.From.Add(new MailboxAddress("FediMail", mailConfig.EmailAddress));
+            replyMessage.To.AddRange(message.From);
+            replyMessage.Subject = "Re: " + message.Subject;
+            var textBody = new TextPart("plain") { Text = $"Message sent. Output from msync: {result.StandardOutput}" };
+            var attachText = new MimePart("text", "plain")
+            {
+                Content = new MimeContent(File.OpenRead(tempFile), ContentEncoding.Default),
+                ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                ContentTransferEncoding = ContentEncoding.Base64,
+                FileName = Path.GetFileName(tempFile) + ".txt"
+            };
+
+            message.Body = new Multipart("mixed")
+            {
+                textBody,
+                attachText
+            };
+
+            return replyMessage;
+        }
+
+        private static async Task SendReplies(MailConfig config)
+        {
+            if (replies.Count == 0)
+                return;
+
+            using (var client = new SmtpClient())
+            {
+                await client.ConnectAsync(config.SmtpHost, 0, true);
+                await client.AuthenticateAsync(config.EmailAddress, config.EmailPassword);
+
+                try
+                {
+                    while (replies.TryDequeue(out var reply))
+                    {
+                        Console.WriteLine($"Sending {reply.Subject} to {string.Join(", ", reply.To.Select(x => x.Name))})");
+
+                        await client.SendAsync(reply);
+                    }
+                }
+                finally
+                {
                     client.Disconnect(true);
                 }
             }
