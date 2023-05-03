@@ -69,6 +69,12 @@ namespace FediMail
 
                         await inbox.StoreAsync(i, new StoreFlagsRequest(StoreAction.Add, MessageFlags.Deleted) { Silent = true });
                     }
+
+                    var syncResult = await Cli.Wrap(msyncPath)
+                        .WithArguments(new[] { "sync", "--send-only" })
+                        .ExecuteBufferedAsync();
+
+                    Console.WriteLine(syncResult.StandardOutput);
                 }
                 finally
                 {
