@@ -23,11 +23,12 @@ namespace FediMail
 
             using (var client = new ImapClient())
             {
+                Console.WriteLine("Logging in to " + mailConfig.EmailAddress);
                 await client.ConnectAsync(mailConfig.ImapHost, 0, true);
                 await client.AuthenticateAsync(mailConfig.EmailAddress, mailConfig.EmailPassword);
 
                 var inbox = client.Inbox;
-                await inbox.OpenAsync(MailKit.FolderAccess.ReadWrite);
+                await inbox.OpenAsync(FolderAccess.ReadWrite);
 
                 Console.WriteLine("Total messages: {0}", inbox.Count);
                 Console.WriteLine("Recent messages: {0}", inbox.Recent);
@@ -38,6 +39,8 @@ namespace FediMail
                     {
                         var message = inbox.GetMessage(i);
                         var tempPath = WritePostFile(message);
+
+                        Console.WriteLine("Wrote post file to " + tempPath);
 
                         // check this result
                         // reply with output
@@ -77,8 +80,6 @@ namespace FediMail
 
             return tempFile;
         }
-
-
 
     }
 }
