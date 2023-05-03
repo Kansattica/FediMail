@@ -19,7 +19,7 @@ namespace FediMail
                 SmtpHost = ConfigurationManager.AppSettings["smtpHost"]
             };
 
-            var msyncPath = ConfigurationManager.AppSettings["mysncPath"];
+            var msyncPath = ConfigurationManager.AppSettings["msyncPath"];
 
             using (var client = new ImapClient())
             {
