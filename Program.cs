@@ -83,7 +83,6 @@ namespace FediMail
                     {
                         var message = inbox.GetMessage(i);
                         var tempPath = WritePostFile(message);
-                        tempFiles.Enqueue(tempPath);
 
                         Console.WriteLine("Wrote post file to " + tempPath);
 
@@ -173,7 +172,7 @@ namespace FediMail
         private static UTF8Encoding utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
         private static string WritePostFile(MimeMessage message)
         {
-            var tempFile = Path.GetTempFileName();
+            string tempFile = MakeTempFile();
 
             var toWrite = new List<string>
             {
@@ -182,12 +181,55 @@ namespace FediMail
                 message.GetTextBody(MimeKit.Text.TextFormat.Plain)
             };
 
+            toWrite.InsertRange(0, HandleAttachments(message));
+
             if (!string.IsNullOrWhiteSpace(message.Subject))
                 toWrite.Insert(0, $"cw={message.Subject}");
 
             File.WriteAllText(tempFile, string.Join(Environment.NewLine, toWrite), utf8NoBom);
 
             return tempFile;
+        }
+
+        private static string MakeTempFile()
+        {
+            var tempFile = Path.GetTempFileName();
+            tempFiles.Enqueue(tempFile);
+            return tempFile;
+        }
+
+        private static IEnumerable<string> HandleAttachments(MimeMessage message)
+        {
+            foreach (var attachment in message.Attachments)
+            {
+                if (attachment is MessagePart)
+                {
+                    var fileName = attachment.ContentDisposition?.FileName;
+                    Console.WriteLine("Not doing anything with attached message " + fileName);
+                    //var rfc822 = (MessagePart)attachment;
+
+                    //if (string.IsNullOrEmpty(fileName))
+                    //    fileName = "attached-message.eml";
+
+                    //using (var stream = File.Create(fileName))
+                    //    rfc822.Message.WriteTo(stream);
+                }
+                else
+                {
+                    var part = (MimePart)attachment;
+                    var fileName = part.FileName;
+
+                    var tempFile = MakeTempFile();
+
+                    Console.WriteLine($"Got an attachment called {fileName}. Saving it to {tempFile}.");
+
+                    using (var stream = File.OpenWrite(tempFile))
+                        part.Content.DecodeTo(stream);
+
+                    yield return "attach=" + tempFile;
+                    yield return "description=" + fileName;
+                }
+            }
         }
 
     }
