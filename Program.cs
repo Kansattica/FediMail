@@ -12,7 +12,7 @@ namespace FediMail
     internal class Program
     {
         private static readonly TimeSpan sleepTime = TimeSpan.FromSeconds(30);
-        private static readonly string msyncPath = ConfigurationManager.AppSettings["msyncPath"];
+        private static readonly string msyncPath = ConfigurationManager.AppSettings["msyncPath"]!;
 
         private static readonly Queue<MimeMessage> replies = new Queue<MimeMessage>();
         private static readonly Queue<string> tempFiles = new Queue<string>();
@@ -22,13 +22,12 @@ namespace FediMail
 
             Console.WriteLine("StayAlive mode is: " + stayAlive);
 
-            var mailConfig = new MailConfig
-            {
-                EmailAddress = ConfigurationManager.AppSettings["emailAddress"],
-                EmailPassword = ConfigurationManager.AppSettings["emailPassword"],
-                ImapHost = ConfigurationManager.AppSettings["imapHost"],
-                SmtpHost = ConfigurationManager.AppSettings["smtpHost"]
-            };
+            var mailConfig = new MailConfig(
+                ConfigurationManager.AppSettings["emailAddress"],
+                ConfigurationManager.AppSettings["emailPassword"],
+                ConfigurationManager.AppSettings["imapHost"],
+                ConfigurationManager.AppSettings["smtpHost"]
+            );
 
             do
             {
@@ -54,6 +53,8 @@ namespace FediMail
             } while (stayAlive);
 
         }
+
+
 
         private static void CleanupTempFiles()
         {
