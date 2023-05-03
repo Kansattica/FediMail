@@ -126,7 +126,7 @@ namespace FediMail
             replyMessage.From.Add(new MailboxAddress("FediMail", mailConfig.EmailAddress));
             replyMessage.To.AddRange(receivedMessage.From);
             replyMessage.Subject = "Re: " + receivedMessage.Subject;
-            var textBody = new TextPart("plain") { Text = $"Message sent. Output from msync: {result.StandardOutput}" };
+            var textBody = new TextPart("plain") { Text = $"Message sent. Output from msync: \n\n {result.StandardOutput}" };
             var attachText = new MimePart("text", "plain")
             {
                 Content = new MimeContent(File.OpenRead(tempFile), ContentEncoding.Default),
