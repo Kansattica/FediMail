@@ -27,6 +27,8 @@ namespace FediMail
                 await client.ConnectAsync(mailConfig.ImapHost, 0, true);
                 await client.AuthenticateAsync(mailConfig.EmailAddress, mailConfig.EmailPassword);
 
+                Console.WriteLine("I'm in.");
+
                 var inbox = client.Inbox;
                 await inbox.OpenAsync(FolderAccess.ReadWrite);
 
@@ -45,10 +47,12 @@ namespace FediMail
                         // check this result
                         // reply with output
                         var result = await Cli.Wrap(msyncPath)
-                            .WithArguments(new[] { "queue", tempPath })
+                            .WithArguments(new[] { "queue", "post", tempPath })
                             .ExecuteBufferedAsync();
 
                         Console.WriteLine(result.StandardOutput);
+
+                        File.Delete(tempPath);
 
                         await inbox.StoreAsync(i, new StoreFlagsRequest(StoreAction.Add, MessageFlags.Deleted) { Silent = true });
                     }
