@@ -12,6 +12,7 @@ If you do run this, be aware that:
 - FediMail will read and delete any email it turns into a post. You should really set up an email account just for it.
 - FediMail will turn around and post from the default msync account. I plan on adding multiaccount support in the future.
 - Any email sent to the inbox FediMail has access to will be turned into a post.
+- FediMail only works with text email. HTML not guaranteed.
 
 Please see below for a helpful diagram and rationale for this project.
 
