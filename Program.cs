@@ -10,9 +10,14 @@ namespace FediMail
 {
     internal class Program
     {
+        private static readonly TimeSpan sleepTime = TimeSpan.FromSeconds(30);
+        private static readonly string msyncPath = ConfigurationManager.AppSettings["msyncPath"];
         static async Task Main(string[] args)
         {
             bool stayAlive = args.Contains("--daemon");
+
+            Console.WriteLine("StayAlive mode is: " + stayAlive);
+
             var mailConfig = new MailConfig
             {
                 EmailAddress = ConfigurationManager.AppSettings["emailAddress"],
@@ -21,18 +26,19 @@ namespace FediMail
                 SmtpHost = ConfigurationManager.AppSettings["smtpHost"]
             };
 
-            var msyncPath = ConfigurationManager.AppSettings["msyncPath"];
-
             do
             {
-                await DoEmailCheck(mailConfig, msyncPath);
+                await DoEmailCheck(mailConfig);
                 if (stayAlive)
-                    await Task.Delay(TimeSpan.FromSeconds(30));
+                {
+                    Console.WriteLine($"Sleeping for {sleepTime} before checking again.");
+                    await Task.Delay(sleepTime);
+                }
             } while (stayAlive);
 
         }
 
-        private static async Task DoEmailCheck(MailConfig mailConfig, string? msyncPath)
+        private static async Task DoEmailCheck(MailConfig mailConfig)
         {
             using (var client = new ImapClient())
             {
