@@ -11,6 +11,7 @@ namespace FediMail
     {
         static async Task Main(string[] args)
         {
+            bool stayAlive = args.Contains("--daemon");
             var mailConfig = new MailConfig
             {
                 EmailAddress = ConfigurationManager.AppSettings["emailAddress"],
@@ -21,6 +22,17 @@ namespace FediMail
 
             var msyncPath = ConfigurationManager.AppSettings["msyncPath"];
 
+            do
+            {
+                await DoEmailCheck(mailConfig, msyncPath);
+                if (stayAlive)
+                    await Task.Delay(TimeSpan.FromSeconds(30));
+            } while (stayAlive);
+
+        }
+
+        private static async Task DoEmailCheck(MailConfig mailConfig, string? msyncPath)
+        {
             using (var client = new ImapClient())
             {
                 Console.WriteLine("Logging in to " + mailConfig.EmailAddress);
@@ -63,7 +75,6 @@ namespace FediMail
                     client.Disconnect(true);
                 }
             }
-
         }
 
         private static string WritePostFile(MimeMessage message)
@@ -73,6 +84,7 @@ namespace FediMail
             var toWrite = new List<string>
             {
                 "visibility=default",
+                $"reply_id={tempFile}",
                 "--- post body below this line ---",
                 message.GetTextBody(MimeKit.Text.TextFormat.Plain)
             };
@@ -80,7 +92,7 @@ namespace FediMail
             if (!string.IsNullOrWhiteSpace(message.Subject))
                 toWrite.Insert(0, $"cw={message.Subject}");
 
-            File.WriteAllLines(tempFile, toWrite, System.Text.Encoding.UTF8);
+            File.WriteAllText(tempFile, string.Join(Environment.NewLine, toWrite), System.Text.Encoding.UTF8);
 
             return tempFile;
         }
