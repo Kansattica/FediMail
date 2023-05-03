@@ -4,6 +4,7 @@ using MailKit;
 using MailKit.Net.Imap;
 using MimeKit;
 using System.Configuration;
+using System.Text;
 
 namespace FediMail
 {
@@ -77,6 +78,7 @@ namespace FediMail
             }
         }
 
+        private static UTF8Encoding utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
         private static string WritePostFile(MimeMessage message)
         {
             var tempFile = Path.GetTempFileName();
@@ -92,7 +94,7 @@ namespace FediMail
             if (!string.IsNullOrWhiteSpace(message.Subject))
                 toWrite.Insert(0, $"cw={message.Subject}");
 
-            File.WriteAllText(tempFile, string.Join(Environment.NewLine, toWrite), System.Text.Encoding.UTF8);
+            File.WriteAllText(tempFile, string.Join(Environment.NewLine, toWrite), utf8NoBom);
 
             return tempFile;
         }
