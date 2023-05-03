@@ -86,7 +86,6 @@ namespace FediMail
             var toWrite = new List<string>
             {
                 "visibility=default",
-                $"reply_id={tempFile}",
                 "--- post body below this line ---",
                 message.GetTextBody(MimeKit.Text.TextFormat.Plain)
             };
