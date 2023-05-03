@@ -14,6 +14,13 @@ If you do run this, be aware that:
 - Any email sent to the inbox FediMail has access to will be turned into a post.
 - FediMail only works with text email. HTML not guaranteed.
 
+Things I would like to implement:
+
+- "advanced mode" (email body is handed directly off to msync)
+- multi-user configuration (check multiple inboxes, post to corresponding accounts)
+- reply with notifications? this one's dangerous
+- security (verify sent-from email, maybe GPG signatures?)
+
 Please see below for a helpful diagram and rationale for this project.
 
 ![8510af3b4d1ff6f7](https://user-images.githubusercontent.com/10965841/235862049-1fe6749d-cdb2-47d8-8877-7d3defc14305.png)
