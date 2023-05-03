@@ -36,11 +36,14 @@ namespace FediMail
                 {
                     await DoEmailCheck(mailConfig);
                     await SendReplies(mailConfig);
-                    CleanupTempFiles();
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                }
+                finally
+                {
+                    CleanupTempFiles();
                 }
 
                 if (stayAlive)
@@ -191,11 +194,16 @@ namespace FediMail
             return tempFile;
         }
 
-        private static string MakeTempFile()
+        private static string MakeTempFile(string withExtension = "")
         {
             var tempFile = Path.GetTempFileName();
-            tempFiles.Enqueue(tempFile);
-            return tempFile;
+            var fileWithExtension = tempFile + withExtension;
+            if (tempFile != fileWithExtension)
+            {
+                File.Move(tempFile, fileWithExtension);
+            }
+            tempFiles.Enqueue(fileWithExtension);
+            return fileWithExtension;
         }
 
         private static IEnumerable<string> HandleAttachments(MimeMessage message)
@@ -219,7 +227,8 @@ namespace FediMail
                     var part = (MimePart)attachment;
                     var fileName = part.FileName;
 
-                    var tempFile = MakeTempFile();
+
+                    var tempFile = MakeTempFile(Path.GetExtension(fileName));
 
                     Console.WriteLine($"Got an attachment called {fileName}. Saving it to {tempFile}.");
 
