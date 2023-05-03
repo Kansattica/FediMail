@@ -5,7 +5,7 @@ FediMail is a C# program that aims to let you use that original decentralized fe
 
 It's pretty bare-bones right now, but I'm working on it.
 
-The email subject become the post's content warning. The email body will be the body. Emails with no subject will be posted CW-less. FediMail will always use your default post privacy. Attachments are planned. It's 1 AM as I write this and I gotta head to bed.
+The email subject become the post's content warning. The email body will be the body. Emails with no subject will be posted CW-less. FediMail will always use your default post privacy. Email attachments will be attached to the post, and the file name will be used as the description. 
 
 If you do run this, be aware that:
 

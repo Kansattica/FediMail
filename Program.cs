@@ -227,7 +227,6 @@ namespace FediMail
                     var part = (MimePart)attachment;
                     var fileName = part.FileName;
 
-
                     var tempFile = MakeTempFile(Path.GetExtension(fileName));
 
                     Console.WriteLine($"Got an attachment called {fileName}. Saving it to {tempFile}.");
