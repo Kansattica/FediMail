@@ -161,7 +161,7 @@ namespace FediMail
                 {
                     while (replies.TryDequeue(out var reply))
                     {
-                        Console.WriteLine($"Sending {reply.Subject} to {string.Join(", ", reply.To.Select(x => x.Name))})");
+                        Console.WriteLine($"Sending {reply.Subject} to {string.Join(", ", reply.To.Mailboxes.Select(x => x.Address))}");
 
                         await client.SendAsync(reply);
                     }
